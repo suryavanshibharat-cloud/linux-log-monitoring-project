@@ -1,39 +1,35 @@
+# Linux Log Monitoring Project  
+A simple but powerful Linux automation project built on **AWS EC2**, **Nginx**, **Shell Scripting**, and **Cron Jobs**.  
+The system analyzes Nginx access logs, detects errors, and updates a live webpage every 1 minute.
+
+![Project Banner](project-banner.png)
 
 ---
 
-## 🛠️ Tech Stack  
-- **AWS EC2 (Amazon Linux 2023)**
-- **Nginx Web Server**
-- **Shell Scripting (Bash)**
-- **Cron for automation**
-- **HTML + CSS + JavaScript** (simple log viewer)
+## 🚀 Project Overview
+This project demonstrates how server-side monitoring works in a Linux environment.  
+It includes:
+
+- Hosting a webpage on **Nginx**  
+- Parsing Nginx access logs using a **shell script**  
+- Tracking:
+  - Total “error” lines
+  - Total HTTP **500** responses  
+- Exporting monitoring results to a **web-accessible log file**  
+- Automating everything using **Cron (every 1 minute)**  
+- Displaying results on a **simple, clean webpage**
 
 ---
 
-## 📜 monitor_logs.sh — Script Overview
+## 🛠️ Technologies Used
+| Component | Purpose |
+|----------|---------|
+| **AWS EC2 (Amazon Linux 2023)** | Cloud server hosting |
+| **Nginx** | Web server + log source |
+| **Bash Script** | Log monitoring logic |
+| **Cron Job** | Automation (1-minute interval) |
+| **HTML/CSS/JS** | Log viewer webpage |
 
-```bash
-#!/bin/bash
-export TZ="Asia/Kolkata"
+---
 
-LOG_FILE="/var/log/nginx/access.log"
-OUTPUT="/var/log/custom-log-monitor.log"
-PUBLIC_COPY="/usr/share/nginx/html/logs/monitor.log"
-
-if [ ! -f "$LOG_FILE" ]; then
-  ERROR_COUNT=0
-  RESPONSE_500=0
-else
-  ERROR_COUNT=$(grep -i "error" "$LOG_FILE" | wc -l)
-  RESPONSE_500=$(grep " 500 " "$LOG_FILE" | wc -l)
-fi
-
-{
-  echo "--------- $(date) ---------"
-  echo "Total Errors: $ERROR_COUNT"
-  echo "HTTP 500 Responses: $RESPONSE_500"
-  echo ""
-} >> "$OUTPUT"
-
-cp "$OUTPUT" "$PUBLIC_COPY"
-# linux-log-monitoring-project
+## 📁 Project Structure
