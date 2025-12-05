@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Monitoring Log</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; background:#f5f7fb; color:#222; margin:0; padding:18px; }
+    .wrap { max-width:900px; margin:18px auto; }
+    header { background:linear-gradient(90deg,#4b79ff,#6ad2ff); color:#fff; padding:20px; border-radius:8px; text-align:center; }
+    h1 { margin:0; font-size:20px; }
+    .controls { margin:12px 0; display:flex; gap:8px; align-items:center; }
+    .controls input { padding:8px; border-radius:6px; border:1px solid #e0e4ef; min-width:220px; }
+    .controls button { padding:8px 12px; border-radius:6px; border:none; background:#4b79ff; color:#fff; cursor:pointer; }
+    pre { background:#0b1220; color:#e6eef8; padding:14px; border-radius:8px; overflow:auto; max-height:60vh; white-space:pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; }
+    .meta { color:#666; font-size:13px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; }
+    .note { color:#8b8f99; font-size:13px; margin-top:10px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Monitoring — Latest Log</h1>
+      <div style="font-size:13px; margin-top:6px;">Auto-refreshing display of <code>/logs/monitor.log</code></div>
+    </header>
+
+    <div class="meta" style="margin-top:14px;">
+      <div>File: <strong>/logs/monitor.log</strong></div>
+      <div>Auto refresh: <span id="intervalLabel">5s</span></div>
+    </div>
+
+    <div class="controls">
+      <input id="filter" placeholder="Filter / search (optional)" />
+      <button id="refreshBtn">Refresh</button>
+      <button id="toggleBtn">Pause</button>
+      <button id="downloadBtn">Download</button>
+    </div>
+
+    <pre id="logBox">Loading...</pre>
+
+    <div class="note">
+      Note: This page shows a public copy of the monitoring log. Don't expose it publicly on production systems.
+    </div>
+  </div>
+
+<script>
+  const URL = '/logs/monitor.log';
+  const logBox = document.getElementById('logBox');
+  const filterInput = document.getElementById('filter');
+  const refreshBtn = document.getElementById('refreshBtn');
+  const toggleBtn = document.getElementById('toggleBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const intervalLabel = document.getElementById('intervalLabel');
+
+  let auto = true;
+  let interval = 5000; // 5 seconds
+  let timer = null;
+
+  function safeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  async function fetchLog(){
+    try{
+      const res = await fetch(URL + '?_=' + Date.now(), {cache:'no-cache'});
+      if(!res.ok) { logBox.textContent = 'Failed to fetch log: ' + res.status; return; }
+      const text = await res.text();
+      const filter = filterInput.value.trim().toLowerCase();
+      if(filter){
+        const lines = text.split(/\r?\n/).filter(l => l.toLowerCase().includes(filter));
+        logBox.innerHTML = lines.map(l => safeHtml(l)).join('\n') || '(no matching lines)';
+      } else {
+        logBox.textContent = text || '(file empty)';
+      }
+    } catch (e){
+      logBox.textContent = 'Error: ' + e.message;
+    }
+  }
+
+  refreshBtn.addEventListener('click', fetchLog);
+  filterInput.addEventListener('input', fetchLog);
+
+  toggleBtn.addEventListener('click', () => {
+    auto = !auto;
+    toggleBtn.textContent = auto ? 'Pause' : 'Resume';
+    if(auto) startAuto(); else stopAuto();
+  });
+
+  downloadBtn.addEventListener('click', () => {
+    window.open(URL, '_blank');
+  });
+
+  function startAuto(){
+    stopAuto();
+    timer = setInterval(fetchLog, interval);
+    intervalLabel.textContent = (interval/1000) + 's';
+  }
+  function stopAuto(){
+    if(timer) clearInterval(timer);
+    timer = null;
+  }
+
+  // initial load
+  fetchLog();
+  startAuto();
+</script>
+</body>
+</html>
